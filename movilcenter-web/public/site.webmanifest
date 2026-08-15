@@ -1,0 +1,16 @@
+{
+  "name": "Movilcenter Plus",
+  "short_name": "Movilcenter",
+  "description": "Tu tienda especializada en smartphones, portátiles, accesorios, repuestos y herramientas profesionales.",
+  "icons": [
+    {
+      "src": "/logo-icon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#011a3d",
+  "theme_color": "#011a3d"
+}

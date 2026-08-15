@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="iconTitle iconDesc">
+  <title id="iconTitle">Movilcenter Plus</title>
+  <desc id="iconDesc">Icono compacto para favicon de Movilcenter Plus</desc>
+  <defs>
+    <linearGradient id="iconGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#005fbf" />
+      <stop offset="100%" stop-color="#022659" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#iconGradient)" />
+  <path d="M24 28h16c2.8 0 5 2.2 5 5v16c0 2.8-2.2 5-5 5H24c-2.8 0-5-2.2-5-5V33c0-2.8 2.2-5 5-5Z" fill="#fff" opacity="0.18" />
+  <path d="M24 28h16c2.8 0 5 2.2 5 5v16c0 2.8-2.2 5-5 5H24c-2.8 0-5-2.2-5-5V33c0-2.8 2.2-5 5-5Z" fill="none" stroke="#fff" stroke-width="3" />
+  <path d="M40 29.5v14" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+  <path d="M30 39.5h11" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+</svg>

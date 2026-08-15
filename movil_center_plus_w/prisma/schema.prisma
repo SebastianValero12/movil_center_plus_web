@@ -1,0 +1,100 @@
+// Movilcenter Plus — Prisma Schema
+// Base de datos: Neon PostgreSQL (serverless)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Categorías de productos ───────────────────────────────────────────────
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+// ─── Productos ─────────────────────────────────────────────────────────────
+model Product {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  oldPrice    Decimal?  @db.Decimal(10, 2)
+  stock       Int       @default(0)
+  sku         String?   @unique
+  isActive    Boolean   @default(true)
+  isFeatured  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  media       ProductMedia[]
+
+  @@map("products")
+}
+
+// ─── Media de productos (imágenes y videos) ────────────────────────────────
+model ProductMedia {
+  id         Int       @id @default(autoincrement())
+  url        String
+  publicId   String?   // Cloudinary public_id para eliminar
+  type       MediaType @default(IMAGE)
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  productId  Int
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// ─── Configuración de la tienda ────────────────────────────────────────────
+model StoreConfig {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique
+  value        String
+  updatedAt    DateTime @updatedAt
+
+  @@map("store_config")
+}
+
+// ─── Usuarios administradores ──────────────────────────────────────────────
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String   // bcrypt hash
+  name      String
+  role      Role     @default(ADMIN)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  SUPERADMIN
+}
