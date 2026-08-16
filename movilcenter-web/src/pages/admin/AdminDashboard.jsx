@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   Package, Tag, Settings, LogOut, Plus, Pencil, Trash2,
-  BarChart3, AlertTriangle, Search, ChevronLeft, ChevronRight, X, Save, Loader2, Upload
+  BarChart3, AlertTriangle, Search, ChevronLeft, ChevronRight, X, Save, Loader2, Upload, Share2
 } from 'lucide-react'
 import { productsApi, categoriesApi, configApi } from '../../lib/api'
 import ImportAccessories from '../../components/admin/ImportAccessories'
@@ -18,6 +18,7 @@ const TABS = [
   { id: 'inventory', label: 'Inventario', icon: Search },
   { id: 'categories', label: 'Categorías', icon: Tag },
   { id: 'config', label: 'Configuración', icon: Settings },
+  { id: 'socials', label: 'Redes Sociales', icon: Share2 },
 ]
 
 // ── Product Form Modal ────────────────────────────────────────────────────────
@@ -711,6 +712,39 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* ── REDES SOCIALES ────────────────────────── */}
+          {activeTab === 'socials' && config && (
+            <form onSubmit={handleSaveConfig} className="max-w-2xl space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                <h2 className="font-bold text-slate-800 mb-2">Redes Sociales</h2>
+                <p className="text-sm text-slate-500 mb-4">Configura los enlaces a tus redes sociales. Dejalos vacíos si no deseas mostrar esa red.</p>
+                
+                {[
+                  { key: 'social_instagram', label: 'Instagram', placeholder: 'https://instagram.com/tuusuario' },
+                  { key: 'social_tiktok', label: 'TikTok', placeholder: 'https://tiktok.com/@tuusuario' },
+                  { key: 'social_facebook', label: 'Facebook', placeholder: 'https://facebook.com/tupagina' },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">{label}</label>
+                    <input
+                      name={key}
+                      type="url"
+                      placeholder={placeholder}
+                      defaultValue={config[key] || ''}
+                      className="w-full border-2 border-slate-200 focus:border-[#005fbf] rounded-xl px-3 py-2.5 outline-none text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <button
+                type="submit"
+                className="flex items-center gap-2 bg-[#005fbf] hover:bg-[#022659] text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
+              >
+                <Save size={16} /> Guardar redes sociales
+              </button>
+            </form>
           )}
         </div>
       </main>

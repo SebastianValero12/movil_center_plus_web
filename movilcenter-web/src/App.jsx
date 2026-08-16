@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 import CartSidebar from './components/cart/CartSidebar'
 import HomePage from './pages/HomePage'
 import ProductPage from './pages/ProductPage'
@@ -17,6 +18,7 @@ function Layout({ children }) {
       <Navbar onCartOpen={() => setCartOpen(true)} />
       <main>{children}</main>
       <CartSidebar isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+      <Footer />
     </>
   )
 }
