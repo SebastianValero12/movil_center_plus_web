@@ -1,39 +1,11 @@
 // src/pages/HomePage.jsx
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useInView, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, Shield, Zap, Wrench, Award, ChevronRight, Clock, MapPin, Phone, Search } from 'lucide-react'
-import { productsApi, configApi } from '../lib/api'
+import { ArrowRight, Shield, Zap, Wrench, Award, Clock, MapPin, Phone, Search } from 'lucide-react'
+import { productsApi, categoriesApi, configApi } from '../lib/api'
 import ProductCard from '../components/product/ProductCard'
-
-const CATEGORIES = [
-  { label: 'Todos', slug: '' },
-  { label: 'Smartphones', slug: 'smartphones' },
-  { label: 'Portátiles', slug: 'portatiles' },
-  { label: 'Accesorios', slug: 'accesorios' },
-  { label: 'Accesorios Gamer', slug: 'accesorios-gamer' },
-  { label: 'Herramientas', slug: 'herramientas' },
-]
-
-// Animated counter
-function Counter({ to, duration = 1.5 }) {
-  const [count, setCount] = useState(0)
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true })
-  useEffect(() => {
-    if (!inView) return
-    let start = 0
-    const step = to / (duration * 60)
-    const timer = setInterval(() => {
-      start += step
-      if (start >= to) { setCount(to); clearInterval(timer) }
-      else setCount(Math.floor(start))
-    }, 1000 / 60)
-    return () => clearInterval(timer)
-  }, [inView, to, duration])
-  return <span ref={ref}>{count.toLocaleString()}</span>
-}
 
 function SkeletonCard() {
   return (
@@ -67,9 +39,7 @@ function FadeUp({ children, delay = 0, className = '' }) {
 
 export default function HomePage() {
   const [searchParams] = useSearchParams()
-  const [activeCategory, setActiveCategory] = useState('')
   const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(12)
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 60])
@@ -78,13 +48,19 @@ export default function HomePage() {
   const categoryParam = searchParams.get('categoria') || ''
   const navigate = useNavigate()
 
-  useEffect(() => { setActiveCategory(categoryParam || '') }, [categoryParam])
+  const activeCategory = categoryParam
 
-  const fetchLimit = limit
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesApi.getAll(),
+    select: (r) => r.data,
+  })
+
+  const categoryOptions = [{ name: 'Todos', slug: '' }, ...categories]
 
   const { data: productsResp = {}, isLoading } = useQuery({
-    queryKey: ['products', activeCategory, searchQuery, page, fetchLimit],
-    queryFn: () => productsApi.getAll({ category: activeCategory || undefined, search: searchQuery || undefined, page, limit: fetchLimit, sort: 'name', order: 'asc' }),
+    queryKey: ['products', activeCategory, searchQuery, page],
+    queryFn: () => productsApi.getAll({ category: activeCategory || undefined, search: searchQuery || undefined, page, limit: 12, sort: 'name', order: 'asc' }),
     select: (r) => r.data,
   })
 
@@ -303,7 +279,7 @@ export default function HomePage() {
       <div className="sticky top-[60px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex gap-1 overflow-x-auto scrollbar-hide py-3">
-            {CATEGORIES.map((cat) => (
+            {categoryOptions.map((cat) => (
               <button
                 key={cat.slug}
                 type="button"
@@ -313,7 +289,7 @@ export default function HomePage() {
                   else params.delete('categoria')
                   params.delete('buscar')
                   navigate(`/?${params.toString()}`)
-                  setActiveCategory(cat.slug)
+                  setPage(1)
                 }}
                 className={`relative shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                   activeCategory === cat.slug
@@ -335,7 +311,7 @@ export default function HomePage() {
             {searchQuery
               ? `Resultados para "${searchQuery}"`
               : activeCategory
-              ? CATEGORIES.find((c) => c.slug === activeCategory)?.label
+              ? categories.find((c) => c.slug === activeCategory)?.name || activeCategory
               : 'Productos destacados'}
           </h2>
           {!isLoading && (
@@ -355,7 +331,7 @@ export default function HomePage() {
               <Search size={28} className="text-slate-300" />
             </div>
             <p className="text-base font-semibold text-slate-500">Sin resultados</p>
-            <button onClick={() => setActiveCategory('')} className="text-sm text-[#005fbf] hover:underline font-medium">
+            <button onClick={() => { setPage(1); navigate('/') }} className="text-sm text-[#005fbf] hover:underline font-medium">
               Ver todos los productos
             </button>
           </div>

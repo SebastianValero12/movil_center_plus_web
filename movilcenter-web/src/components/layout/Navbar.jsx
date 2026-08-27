@@ -5,16 +5,7 @@ import { ShoppingCart, Search, Menu, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import useCartStore from '../../store/cartStore'
-import { configApi } from '../../lib/api'
-
-const NAV_LINKS = [
-  { label: 'Inicio', to: '/' },
-  { label: 'Smartphones', to: '/?categoria=smartphones' },
-  { label: 'Portátiles', to: '/?categoria=portatiles' },
-  { label: 'Accesorios', to: '/?categoria=accesorios' },
-  { label: 'Accesorios Gamer', to: '/?categoria=accesorios-gamer' },
-  { label: 'Herramientas', to: '/?categoria=herramientas' },
-]
+import { categoriesApi, configApi } from '../../lib/api'
 
 export default function Navbar({ onCartOpen }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -25,6 +16,17 @@ export default function Navbar({ onCartOpen }) {
   const location = useLocation()
   const items = useCartStore((s) => s.items)
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesApi.getAll(),
+    select: (r) => r.data,
+  })
+
+  const navLinks = [
+    { label: 'Inicio', to: '/' },
+    ...categories.map((category) => ({ label: category.name, to: `/?categoria=${category.slug}` })),
+  ]
 
   const { data: config } = useQuery({
     queryKey: ['config'],
@@ -91,7 +93,7 @@ export default function Navbar({ onCartOpen }) {
 
             {/* Nav desktop */}
             <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -165,7 +167,7 @@ export default function Navbar({ onCartOpen }) {
               className="lg:hidden overflow-hidden border-t border-slate-100 bg-white"
             >
               <div className="px-4 py-3 flex flex-col gap-0.5">
-                {NAV_LINKS.map((link, i) => (
+                {navLinks.map((link, i) => (
                   <motion.div
                     key={link.to}
                     initial={{ x: -10, opacity: 0 }}

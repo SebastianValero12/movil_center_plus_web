@@ -185,6 +185,65 @@ function ProductModal({ product, categories, onClose, onSave }) {
   )
 }
 
+function CategoryModal({ category, onClose, onSave }) {
+  const [form, setForm] = useState({
+    name: category?.name || '',
+    slug: category?.slug || '',
+    description: category?.description || '',
+    sortOrder: category?.sortOrder ?? 0,
+  })
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await onSave(form)
+      onClose()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al guardar la categoría')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-slate-800">{category ? 'Editar categoría' : 'Nueva categoría'}</h2>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={20} /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre *</label>
+            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full border-2 border-slate-200 focus:border-[#005fbf] rounded-xl px-3 py-2.5 outline-none text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Slug *</label>
+            <input required pattern="[a-z0-9-]+" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} className="w-full border-2 border-slate-200 focus:border-[#005fbf] rounded-xl px-3 py-2.5 outline-none text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Descripción</label>
+            <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full border-2 border-slate-200 focus:border-[#005fbf] rounded-xl px-3 py-2.5 outline-none text-sm resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">Orden</label>
+            <input type="number" min="0" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} className="w-full border-2 border-slate-200 focus:border-[#005fbf] rounded-xl px-3 py-2.5 outline-none text-sm" />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50">Cancelar</button>
+            <button type="submit" disabled={saving} className="px-5 py-2.5 bg-[#005fbf] hover:bg-[#022659] text-white rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-70">
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -194,6 +253,8 @@ export default function AdminDashboard() {
   const [quickCategory, setQuickCategory] = useState('accesorios')
   const [editingProduct, setEditingProduct] = useState(null)
   const [showNewProduct, setShowNewProduct] = useState(false)
+  const [editingCategory, setEditingCategory] = useState(null)
+  const [showNewCategory, setShowNewCategory] = useState(false)
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
   const navigate = useNavigate()
@@ -257,6 +318,29 @@ export default function AdminDashboard() {
     setEditingProduct(null)
     setShowNewProduct(false)
   }
+
+  async function handleSaveCategory(form) {
+    if (editingCategory) {
+      await categoriesApi.update(editingCategory.id, form)
+      toast.success('Categoría actualizada')
+    } else {
+      await categoriesApi.create(form)
+      toast.success('Categoría creada')
+    }
+    qc.invalidateQueries({ queryKey: ['categories'] })
+    qc.invalidateQueries({ queryKey: ['admin-stats'] })
+    setEditingCategory(null)
+    setShowNewCategory(false)
+  }
+
+  const deleteCategory = useMutation({
+    mutationFn: (id) => categoriesApi.remove(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['categories'] })
+      toast.success('Categoría desactivada')
+    },
+    onError: () => toast.error('Error al desactivar la categoría'),
+  })
 
   async function handleSaveConfig(e) {
     e.preventDefault()
@@ -395,19 +479,19 @@ export default function AdminDashboard() {
                       className="w-full pl-9 pr-4 py-2.5 border-2 border-slate-200 focus:border-[#005fbf] rounded-xl outline-none text-sm"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    {['accesorios', 'accesorios-gamer', 'repuestos'].map((category) => (
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    {categories?.map((category) => (
                       <button
-                        key={category}
+                        key={category.slug}
                         type="button"
-                        onClick={() => { setQuickCategory(category); setPage(1) }}
+                        onClick={() => { setQuickCategory(category.slug); setPage(1) }}
                         className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                          quickCategory === category
+                          quickCategory === category.slug
                             ? 'bg-[#005fbf] text-white'
                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                       >
-                        {category === 'accesorios' ? 'Accesorios' : category === 'accesorios-gamer' ? 'Accesorios Gamer' : 'Repuestos'}
+                        {category.name}
                       </button>
                     ))}
                   </div>
@@ -692,13 +776,23 @@ export default function AdminDashboard() {
 
           {/* ── CATEGORIES ────────────────────────────── */}
           {activeTab === 'categories' && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden max-w-xl">
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden max-w-3xl">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
+                <div>
+                  <h2 className="font-bold text-slate-800">Categorías de productos</h2>
+                  <p className="text-sm text-slate-500">Las categorías activas aparecen en la tienda y en el formulario de productos.</p>
+                </div>
+                <button onClick={() => setShowNewCategory(true)} className="flex items-center gap-2 bg-[#005fbf] hover:bg-[#022659] text-white px-4 py-2.5 rounded-xl text-sm font-semibold">
+                  <Plus size={17} /> Nueva categoría
+                </button>
+              </div>
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="text-left px-4 py-3 font-semibold text-slate-600">Nombre</th>
                     <th className="text-left px-4 py-3 font-semibold text-slate-600">Slug</th>
                     <th className="text-left px-4 py-3 font-semibold text-slate-600">Productos</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-600">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -707,6 +801,12 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3 font-semibold text-slate-800">{cat.name}</td>
                       <td className="px-4 py-3 text-slate-500 font-mono text-xs">{cat.slug}</td>
                       <td className="px-4 py-3 text-slate-600">{cat._count?.products ?? 0}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setEditingCategory(cat)} className="p-2 hover:bg-blue-50 hover:text-[#005fbf] rounded-lg" title="Editar categoría"><Pencil size={15} /></button>
+                          <button onClick={() => { if (confirm(`¿Desactivar "${cat.name}"?`)) deleteCategory.mutate(cat.id) }} className="p-2 hover:bg-red-50 hover:text-red-500 rounded-lg" title="Desactivar categoría"><Trash2 size={15} /></button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -756,6 +856,13 @@ export default function AdminDashboard() {
           categories={categories}
           onClose={() => { setShowNewProduct(false); setEditingProduct(null) }}
           onSave={handleSaveProduct}
+        />
+      )}
+      {(showNewCategory || editingCategory) && (
+        <CategoryModal
+          category={editingCategory}
+          onClose={() => { setShowNewCategory(false); setEditingCategory(null) }}
+          onSave={handleSaveCategory}
         />
       )}
     </div>
