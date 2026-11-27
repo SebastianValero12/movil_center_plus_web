@@ -25,7 +25,9 @@ export default function Navbar({ onCartOpen }) {
 
   const navLinks = [
     { label: 'Inicio', to: '/' },
-    ...categories.map((category) => ({ label: category.name, to: `/?categoria=${category.slug}` })),
+    ...categories
+      .filter((category) => !['repuestos', 'herramientas'].includes(category.slug))
+      .map((category) => ({ label: category.name, to: `/?categoria=${category.slug}` })),
   ]
 
   const { data: config } = useQuery({
